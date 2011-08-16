@@ -1,0 +1,10 @@
+include "109.mayu"
+
+mod shift += !!Space
+mod control += !!Henkan
+mod meta += !!Muhenkan
+
+mod control += Eisuu
+key *Eisuu = *LControl
+key *IC-SemiColon = Enter
+key *IC-C-~S-SemiColon = SemiColon

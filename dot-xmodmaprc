@@ -1,0 +1,17 @@
+! keycode 131 = Control_L
+! keycode 129 = Meta_L
+! keycode 208 = Shift_R
+keycode 100 = Meta_L
+keycode 101 = Super_L
+keycode 102 = Control_L
+
+clear Mod1
+add Mod1 = Meta_L Alt_R Alt_L
+clear Control
+add Control = Control_L Control_R
+
+clear Shift
+add Shift = Shift_R Shift_L
+! or
+clear Mod4
+add Mod4 = Super_L Super_R Hyper_L

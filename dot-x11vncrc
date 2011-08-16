@@ -1,0 +1,5 @@
+forever
+rfbauth /home/shigeru/.vnc/passwd
+display :0
+repeat
+xkb

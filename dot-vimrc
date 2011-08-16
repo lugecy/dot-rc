@@ -1,0 +1,216 @@
+" vim:set sw=2 ts=2 foldmethod=marker fenc=utf-8:
+" defaultで有効なオプションは設定しない方向で
+"
+" vi互換動作をしない
+set nocompatible
+
+" スクリプトの文字コード指定
+scriptencoding utf-8
+
+" 文字コードの自動認識{{{1
+if !filereadable($VIMRUNTIME . '/encode_japan.vim')
+	"" 色々周り道した結果決めうちでいってかまわない気がする・・・
+	if &encoding ==# 'latin1'
+		set encoding=utf-8
+	endif
+"" from ずんwiki 
+"" http://www.kawaz.jp/pukiwiki/?vim#cb691f26
+	if &encoding !=# 'utf-8'
+		set encoding=japan
+		set fileencoding=japan
+	endif
+	if has('iconv')
+		let s:enc_euc = 'euc-jp'
+		let s:enc_jis = 'iso-2022-jp'
+		" iconvがeucJP-msに対応しているかをチェック
+		if iconv("\x87\x64\x87\x6a", 'cp932', 'eucjp-ms') ==# "\xad\xc5\xad\xcb"
+			let s:enc_euc = 'eucjp-ms'
+			let s:enc_jis = 'iso-2022-jp-3'
+			" iconvがJISX0213に対応しているかをチェック
+		elseif iconv("\x87\x64\x87\x6a", 'cp932', 'euc-jisx0213') ==# "\xad\xc5\xad\xcb"
+			let s:enc_euc = 'euc-jisx0213'
+			let s:enc_jis = 'iso-2022-jp-3'
+		endif
+		" fileencodingsを構築
+		if &encoding ==# 'utf-8'
+			let s:fileencodings_default = &fileencodings
+			let &fileencodings = s:enc_jis .','. s:enc_euc .',cp932'
+			let &fileencodings = &fileencodings .','. s:fileencodings_default
+			unlet s:fileencodings_default
+		else
+			let &fileencodings = &fileencodings .','. s:enc_jis
+			set fileencodings+=utf-8,ucs-2le,ucs-2
+			if &encoding =~# '^\(euc-jp\|euc-jisx0213\|eucjp-ms\)$'
+				set fileencodings+=cp932
+				set fileencodings-=euc-jp
+				set fileencodings-=euc-jisx0213
+				set fileencodings-=eucjp-ms
+				let &encoding = s:enc_euc
+				let &fileencoding = s:enc_euc
+			else
+				let &fileencodings = &fileencodings .','. s:enc_euc
+			endif
+		endif
+		" 定数を処分
+		unlet s:enc_euc
+		unlet s:enc_jis
+	endif
+	" 日本語を含まない場合は fileencoding に encoding を使うようにする
+	if has('autocmd')
+		function! AU_ReCheck_FENC()
+			if &fileencoding =~# 'iso-2022-jp' && search("[^\x01-\x7e]", 'n') == 0
+				let &fileencoding=&encoding
+			endif
+		endfunction
+		autocmd BufReadPost * call AU_ReCheck_FENC()
+	endif
+endif
+" 改行コードの自動認識
+set fileformats=unix,dos,mac
+" □とか○の文字があってもカーソル位置がずれないようにする
+if exists('&ambiwidth')
+  set ambiwidth=double
+endif 
+" 簡易版？
+"set fileencodings=iso-2002-jp,utf-8,euc-jp,cp932
+
+" 整形に関する設定 -------------------------{{{1
+" タブの画面上での幅
+set tabstop=4
+" 自動インデントおよび>>,<<コマンドで幅
+set shiftwidth=4
+" 前行に合せて自動的にインデントする (noautoindent:インデントしない)
+set autoindent
+" {,},やC言語キーワードなどに反応してインデントする
+set smartindent
+" さらに賢い(はずの？)自動インデントを有効にする
+"set cindent
+" タブをスペースに展開する
+"set expandtab
+" バックスペースの動作(indent,start,eol)
+set backspace=indent,start,eol
+
+" ファイル操作に関する設定-----------------{{{1
+" 未保存のバッファがある場合にバッファ切り替えを可能にするか？
+set hidden
+" バックアップファイルを作成する
+"set backup
+" バックアップファイルを作成するディレクトリ
+"set backupdir
+" スワップファイルを作成するディレクトリ
+"set dir
+
+" コマンドラインに関する設定-----{{{1
+"コマンドライン履歴の保存数
+set history=1000
+" コマンドライン補完するときに強化されたものを使う(参照 :help wildmenu)
+set wildmenu
+
+" 見た目の設定 -------------------------{{{1
+" タブや改行を表示 (list:表示)
+"set nolist
+" 行番号を非表示 (number:表示)
+set number
+" 長い行を折り返して表示 (nowrap:折り返さない)
+"set wrap
+" 常にステータス行を表示 (詳細は:he laststatus)
+set laststatus=2
+" コマンドラインの高さ (Windows用gvim使用時はgvimrcを編集すること)
+"set cmdheight=1
+" コマンドをステータス行に表示
+set showcmd
+" ルーラ(現在地の行数・文字数)をステータスライン表示
+set ruler
+" タイトルを表示
+"set title
+" 16・256色ターミナル用の設定
+if has('terminfo')
+"	set t_Co=16
+"	set t_AB=[%?%p1%{8}%<%t%p1%{40}%+%e%p1%{92}%+%;%dm
+"	set t_AF=[%?%p1%{8}%<%t%p1%{30}%+%e%p1%{82}%+%;%dm
+	if &term == 'cygwin' || &term =='xterm-256color'
+		set t_Co=256
+		"set t_AB=[48;5;%dm
+		"set t_AF=[38;5;%dm
+	endif
+"else
+"	set t_Co=16
+"	set t_Sf=[3%dm
+"	set t_Sb=[4%dm
+endif
+" 補完メニューの色設定
+if v:version >= 700
+	hi Pmenu ctermbg=DarkGray
+	hi PmenuSel ctermbg=DarkMagenta
+endif
+" 背景色の設定
+set background=dark
+" 構文強調(色付け)を行う
+if has('syntax')
+	syntax on
+endif
+
+" ファイルタイプに合わせたインデント・整形処理を行なう
+if has('autocmd')
+	filetype on
+	filetype indent on
+	filetype plugin on
+endif
+
+" 検索関係 -------------------------{{{1
+" 検索時にハイライトを行う
+set hlsearch
+" 検索時にインクリメンタルサーチを行う
+set incsearch
+" 検索時に大文字小文字を無視 (noignorecase:無視しない)
+set ignorecase
+" 大文字小文字の両方が含まれている場合は大文字小文字を区別
+set smartcase
+
+" Util群 -------------------------{{{1
+" 開いたバッファの場所へ移動する
+function! AutoCd()
+	if &buftype != 'nofile'
+		execute ":lcd " . expand("%:p:h")
+	endif
+endfunction
+au BufEnter * call AutoCd()
+
+" vimgrep時に自動的にエラーウィンドウを開く
+au QuickFixCmdPost vimgrep,grep cw
+
+" Keymaping ----------------------{{{1
+" エスケープキーをベストポジションに
+imap <C-L> <Esc>
+cmap <C-L> <Esc>
+vmap <C-L> <Esc>
+" 単語検索の挙動調整(まず現在位置の単語をハイライト)
+nnoremap * *N
+" コマンドラインのキー操作をEmac風に
+cnoremap <C-A> <Home>
+cnoremap <C-E> <End>
+cnoremap <C-F> <Right>
+cnoremap <C-B> <Left>
+" 履歴インクリメンタル検索をデフォルトに
+cnoremap <C-P> <Up>
+cnoremap <C-N> <Down>
+" オムニ補完をVisual Studioのインテリセンス風のkeymapで
+imap <C-Space> <C-x><C-o>
+" カーソル下の単語を内部grepで検索
+nnoremap <C-\>g :vimgrep <C-r>=expand('<cword>')<CR> %<CR>
+" 日付を挿入
+nnoremap <F4> "=strftime("[%Y-%m-%d]")<CR>p
+
+" ローカルパス・スクリプトのための設定・keymap--{{{1
+" 付属のmatchit.vimを有効化
+source $VIMRUNTIME/macros/matchit.vim
+" <Leader>oにChangelogエントリ挿入をマップする
+" gnuchlog.vimがあればそれを読み込み，なければデフォルトのchangelog.vimを読み込む
+runtime plugin/gnuchlog.vim
+if !exists("loaded_GnuChangeLog")
+	source $VIMRUNTIME/ftplugin/changelog.vim
+endif
+" ローカル設定を読み込む
+if exists('$HOME') && filereadable($HOME . '/.vim/vimlocalrc')
+	source $HOME/.vim/vimlocalrc
+endif

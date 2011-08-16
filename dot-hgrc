@@ -1,0 +1,24 @@
+[extensions]
+hgext.pager=
+hgext.color=
+hgext.mq=
+hgext.record=
+hgext.graphlog=
+hgext.parentrevspec=
+hgext.hgk=
+hgext.bookmarks=
+hgext.rebase=
+hgshelve=~/dot-rc/hgshelve.py
+[ui]
+merge = internal:merge
+[defaults]
+identify = -nbit
+diff = --git
+[pager]
+pager = less -R
+attend = log, diff, qdiff
+[bookmarks]
+track.current = True
+[merge-tools]
+emacsclient.args = -e "(ediff-merge-with-ancestor \"$local\" \"$other\" \"$base\" nil \"$output\")"
+emacsclient.checkchanged = True

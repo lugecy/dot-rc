@@ -1,0 +1,306 @@
+# -*- shell-script -*-
+# OS seting
+case "${OSTYPE}" in
+freebsd*|darwin*)
+	alias ls="ls -G -w"
+	;;
+linux*)
+	alias ls='ls -F --color=auto'
+	alias gopen='gnome-open'
+	export GIT_PAGER="less -r"
+	;;
+cygwin*)
+	alias ls='ls -hF --color=auto --show-control-chars'
+	alias eo='explorer .'
+	export EDITOR='emacsclient -a /cygdrive/e/Desktop/emacs-23.1.91/bin/runemacs.exe'
+	;;
+esac
+typeset -U path
+path=($HOME/bin $path)
+
+# PAGER setting
+if type lv &>/dev/null ; then
+	export PAGER=lv
+else
+	export PAGER=less
+fi
+
+alias ll='ls -l'                              # long list
+alias la='ls -A'                              # all but . and ..
+alias l='ls -AlF'                              #
+if [ -x /usr/bin/gvim ]; then
+	alias gvi='gvim'
+fi
+alias psg='ps aux | grep '
+alias ee='emacsclient'
+alias een='emacsclient -n'
+
+# 拡張子に応じたコマンドを実行
+alias -s rb=ruby
+
+# Set a HOSTNAME variable
+typeset -l HOSTNAME
+
+## プロンプト設定
+# プロンプトに環境変数を含めるときに必要
+setopt prompt_subst
+# 色付け設定をわかりやすく
+autoload colors
+colors
+# Set a default prompt of: "<user>@<host>[<hist#>] [<screen_window#>]<vcs_info> <current_directory>"
+PROMPT='%{${fg[green]}%}%n@%m[%h]${WINDOW:+"[$WINDOW]"}${vcs_info_msg_0_} %{${fg[yellow]}%}%~%{${reset_color}%}
+$ '
+# for vcs_info configure
+autoload -Uz add-zsh-hook
+autoload -Uz is-at-least
+if is-at-least 4.3.7 ;then
+	autoload -Uz vcs_info
+	zstyle ':vcs_info:*' disable bzr
+	add-zsh-hook precmd _update_vcs_info_msg
+fi
+function _update_vcs_info_msg() {
+	vcs_info 'prompt'
+}
+
+if [ ! -z "${ZSH_NAME}" -a -z "${SHELL}" ]; then
+	SHELL="/bin/zsh"
+	export SHELL
+fi
+
+# 単語の区切りとみなされない文字
+# default '*?_-.[]~=/&;!#$%^(){}<>'
+WORDCHARS='*?_-.[]~=&;!#$%^(){}<>'
+
+# 補完伝説の始まり
+autoload -U compinit && compinit
+#source ~/.zcompctl
+
+# 補完候補をいきなり挿入
+#setopt menu_complete
+# 補完候補を詰めて表示
+setopt list_packed
+# 補完の挙動が分かりやすくなる設定
+zstyle ':completion:*' format '%BCompleting %d%b'
+zstyle ':completion:*' group-name ''
+# 補完時に大文字小文字を区別しない
+zstyle ':completion:*' matcher-list 'm:{a-z}={A-Z}'
+# 補完候補にも色付け
+#eval `dircolors`
+export LS_COLORS="$LS_COLORS:di=01;31:"
+zstyle ':completion:*:default' list-colors ""
+# 補完候補を反転表示
+zstyle ':completion:*:default' menu select=1
+# killコマンドの補完対象を全プロセスに
+zstyle ':completion:*:processes' command 'ps x'
+# 補完候補リストにファイルの種類を表示
+setopt list_types
+# 補完候補を横にソート
+setopt list_rows_first
+# --prefix=/usr などの=移行でも補完できるようにする
+setopt magic_equal_subst
+# 間違い入力を訂正
+#setopt correct
+# ビープ音無し
+setopt no_beep
+# 先頭のcdを忘れたとき・・
+setopt auto_cd
+
+# 拡張グロブを有効
+setopt extended_glob
+
+setopt ignore_eof # C-d = EOF stop
+setopt no_flow_control # C-s, C-q stop
+
+### For Japanese???
+setopt print_eight_bit # TAB補完時の日本語表示のため
+
+cdpath=( ~ )                    # cd のサーチパス
+#fpath=($fpath ~/.zfunc )       # zsh関数のサーチパス
+
+#↓カレントディレクトリに候補がない場合のみ cdpath 上のディレクトリを候補
+zstyle ':completion:*:cd:*' tag-order local-directories path-directories
+# cf. zstyle ':completion:*:path-directories' hidden true
+# cf. cdpath 上のディレクトリは補完候補から外れる
+
+HISTFILE=~/.zsh_history
+HISTSIZE=100000
+SAVEHIST=100000
+
+setopt append_history
+# 履歴ファイルに時刻を記録
+setopt extended_history
+#setopt hist_no_store
+setopt hist_ignore_all_dups
+#setopt hist_ignore_dups
+setopt share_history
+setopt hist_ignore_space
+
+bindkey -e
+bindkey '^P' history-beginning-search-backward
+bindkey '^N' history-beginning-search-forward
+# cygwin上でDeleteがきかない対策
+bindkey "[3~" delete-char
+
+setopt auto_pushd
+setopt pushd_ignore_dups
+alias pd='popd'
+alias gd='dirs -v; echo -n "select number:"; read newdir; cd +"$newdir"'
+
+# for abbrevision
+#typeset -A myabbrev
+#myabbrev=(
+#	"L"	"| $PAGER"
+#	"G"		"| grep"
+#	"HD" "shigoro.dyndns.org"
+#	"SVH" "svn+ssh://shigoro.dyndns.org/mnt/svn"
+#)
+#
+#my-expand-abbrev(){
+#	local left prefix
+#	left=$(echo -nE "$LBUFFER" | sed -e "s/[_a-zA-Z0-9]*$//")
+#	prefix=$(echo -nE "$LBUFFER" | sed -e "s/.*[^_a-zA-Z0-9]\([_a-zA-Z0-9]*\)/\1/")
+#	LBUFFER=$left${myabbrev[$prefix]:-$prefix}" "
+#}
+#zle -N my-expand-abbrev
+#bindkey " "	my-expand-abbrev
+
+# 単語（空白文字で区切られているもの）に対する補完
+typeset -A word_abbrev
+word_abbrev=(
+	"tarc"	"tar czvf "
+	"I"		"|"
+	"L"		"| $PAGER "
+	"G"		"| grep "
+	"V"		"| vi -R - "
+	"HD" "shigoro.dyndns.org"
+	"SVH" "svn+ssh://"
+)
+
+# パイプに対する補完
+typeset -A pipe_abbrev
+pipe_abbrev=(
+	"l"	"$PAGER"
+	"g"	"grep"
+	"s"	"sort"
+	"w"	"wc"
+	"h"	"head"
+	"t"	"tail"
+	"v" "vi -R -"
+)
+
+# 単語略語展開
+expand-word-abbrev()
+{
+	local left right abbrev
+	# 最後の単語
+	right=$(echo -nE "$LBUFFER" | sed -e 's/.*[[:space:]]\([^[:space:]]*\)$/\1/')
+	abbrev=$word_abbrev[$right]
+	
+	if [ -z "$abbrev" ] ; then
+		return 1
+	fi
+
+	# 残り
+	left=$(echo -nE "$LBUFFER" | sed -e 's/[^[:space:]]*$//')
+	LBUFFER=$left$abbrev
+	return 0
+}
+
+# パイプ略語展開
+expand-pipe-abbrev()
+{
+	local left right abbrev
+	# 最後の | 以降を取得
+	right=$(echo -nE "$LBUFFER" | sed -e 's/.*|\([^|]*\)$/\1/')
+	abbrev=$pipe_abbrev[$right]
+	
+	if [ -z "$abbrev" ] ; then
+		return 1
+	fi
+
+	# 残り
+	left=$(echo -nE "$LBUFFER" | sed -e 's/[^|]*$//')
+	LBUFFER=$left" "$abbrev" "
+	return 0
+}
+
+# 略語展開 || complete-word
+expand-my-abbrev-or-complete()
+{
+	expand-pipe-abbrev || expand-word-abbrev || zle expand-or-complete
+}
+
+zle -N expand-my-abbrev-or-complete
+bindkey "^I" expand-my-abbrev-or-complete
+
+# For Emacs ansi-term
+function set-eterm-dir() {
+	echo 'AnSiTu' $(whoami)
+	case "${OSTYPE}" in
+		linux*)
+			echo 'AnSiTh' $(hostname)
+			;;
+		cygwin*)
+			echo 'AnSiTh' "GOGOTEA"
+			;;
+	esac
+	echo 'AnSiTc' $(pwd)
+	# for bash (share_history)
+	# history -a
+}
+if [ $TERM = eterm-color ]; then
+	# for bash
+	# PROMPT_COMMAND=set-eterm-dir
+	
+	# for zsh
+	if [ -n "$CYGWIN" ];then
+		export PAGER=cat
+	fi
+	function chpwd() {
+		set-eterm-dir
+	}
+fi
+
+# mkdir and cd
+function mkcd () {
+	mkdir $1 && cd $1
+}
+
+case "${TERM}" in
+screen*|ansi*)
+	preexec() {
+		# printf "\eP\e]0;${1%% *}\a\e\\"
+		printf "\eP\e]0;${1}\a\e\\"
+		#printf "\ek!$1\e\\"
+	}
+	precmd() {
+		# printf "\eP\e]0;~$(basename $(pwd))\a\e\\"
+		printf "\eP\e]0;~$(pwd)\a\e\\"
+		#printf "\ek~$(basename $(pwd))\e\\"
+	}
+	;;
+esac
+
+zstyle ':completion:*:sudo:*' command-path /usr/local/sbin /usr/local/bin /usr/sbin /usr/bin /sbin /bin
+
+# 計算コマンド - 地獄の猫日記
+# http://d.hatena.ne.jp/nokturnalmortum/20100410/1270893150
+function _calc {
+  echo $(( $@ )) 0x$(([##16] $@ )) 0b$(([##2] $@ ))
+}
+alias c="noglob _calc"
+
+# 直前のコマンドの出力を補完候補にする _complete_previous_output - hchbaw記
+# http://d.hatena.ne.jp/hchbaw/20100408/1270746623
+_complete_previous_output () {
+  local command xs
+
+  command=${(Q)$(fc -l -n -1)}
+  xs=(${(f)"$(${=command})"})
+
+  _message "($command)"
+  _describe -t previous-output "" xs -M 'm:{a-z}={A-Z} r:|?=**'
+}
+
+zle -C complete-previous-output complete-word _complete_previous_output
+bindkey "^X^k" complete-previous-output
